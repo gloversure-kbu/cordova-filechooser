@@ -12,6 +12,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.*;
+
 public class FileChooser extends CordovaPlugin {
 
     private static final String TAG = "FileChooser";
@@ -96,7 +98,7 @@ public class FileChooser extends CordovaPlugin {
         file.createNewFile();
         try (OutputStream outputStream = new FileOutputStream(file);
              InputStream inputStream = myContext.getContentResolver().openInputStream(uri)) {
-            FileUtil.copyStream(inputStream, outputStream); //Simply reads input to output stream
+            copyStream(inputStream, outputStream); //Simply reads input to output stream
             outputStream.flush();
         }
         return Uri.fromFile(file);
@@ -129,5 +131,24 @@ public class FileChooser extends CordovaPlugin {
             }
         }
         return fileName;
+    }
+
+    public static void copyStream(File src, File dst) throws IOException {
+        InputStream in = new FileInputStream(src);
+        try {
+            OutputStream out = new FileOutputStream(dst);
+            try {
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            } finally {
+                out.close();
+            }
+        } finally {
+            in.close();
+        }
     }
 }
