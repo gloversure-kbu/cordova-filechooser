@@ -12,15 +12,18 @@ Requires Cordova >= 2.8.0
 ## API
 
 ```javascript
-fileChooser.open(filter, successCallback, failureCallback); // with mime filter
+fileChooser.open(options, successCallback, failureCallback); // with options
 
-fileChooser.open(successCallback. failureCallback); // without mime filter
+fileChooser.open(successCallback. failureCallback); // without options
 ```
 
-### Filter (Optional)
+### Options (Optional)
 
 ```javascript
-{ "mime": "application/pdf" }  // text/plain, image/png, image/jpeg, audio/wav etc
+{ 
+	"mime": "application/pdf" // text/plain, image/png, image/jpeg, audio/wav etc
+	"insecure": false // boolean, default false. If true, the file chooser will return an insecure file:// URI.
+}
 ```
 
 The success callback gets the uri of the selected file

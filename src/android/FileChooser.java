@@ -17,8 +17,10 @@ public class FileChooser extends CordovaPlugin {
     private static final String TAG = "FileChooser";
     private static final String ACTION_OPEN = "open";
     private static final int PICK_FILE_REQUEST = 1;
+    private static final int PICK_INSECURE_REQUEST = 2;
 
     public static final String MIME = "mime";
+    public static final String INSECURE = "insecure";
 
     CallbackContext callback;
 
@@ -45,7 +47,8 @@ public class FileChooser extends CordovaPlugin {
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
 
         Intent chooser = Intent.createChooser(intent, "Select File");
-        cordova.startActivityForResult(this, chooser, PICK_FILE_REQUEST);
+        int requestType = (filter.has(INSECURE) && filter.optBoolean(INSECURE, true)) ? PICK_INSECURE_REQUEST : PICK_FILE_REQUEST;
+        cordova.startActivityForResult(this, chooser, requestType);
 
         PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
         pluginResult.setKeepCallback(true);
@@ -56,11 +59,14 @@ public class FileChooser extends CordovaPlugin {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == PICK_FILE_REQUEST && callback != null) {
+        if ((requestCode == PICK_FILE_REQUEST || requestCode == PICK_INSECURE_REQUEST) && callback != null) {
 
             if (resultCode == Activity.RESULT_OK) {
 
                 Uri uri = data.getData();
+                if (requestCode == PICK_INSECURE_REQUEST) {
+                    uri = this.getFilePathFromUri(uri);
+                }
 
                 if (uri != null) {
 
@@ -82,5 +88,17 @@ public class FileChooser extends CordovaPlugin {
                 callback.error(resultCode);
             }
         }
+    }
+
+    public static Uri getFilePathFromUri(Uri uri) throws JSONException {
+        String fileName = getFileName(uri);
+        File file = new File(myContext.getExternalCacheDir(), fileName);
+        file.createNewFile();
+        try (OutputStream outputStream = new FileOutputStream(file);
+             InputStream inputStream = myContext.getContentResolver().openInputStream(uri)) {
+            FileUtil.copyStream(inputStream, outputStream); //Simply reads input to output stream
+            outputStream.flush();
+        }
+        return Uri.fromFile(file);
     }
 }
