@@ -94,11 +94,11 @@ public class FileChooser extends CordovaPlugin {
 
     public static Uri getFilePathFromUri(Uri uri) throws JSONException {
         String fileName = getFileName(uri);
-        File file = new File(myContext.getExternalCacheDir(), fileName);
+        File file = new File(getExternalCacheDir(), fileName);
         file.createNewFile();
         try (OutputStream outputStream = new FileOutputStream(file);
-             InputStream inputStream = myContext.getContentResolver().openInputStream(uri)) {
-            copyStream(inputStream, outputStream); //Simply reads input to output stream
+            InputStream inputStream = getContentResolver().openInputStream(uri)) {
+            inputStream.transferTo(outputStream);
             outputStream.flush();
         }
         return Uri.fromFile(file);
@@ -117,12 +117,12 @@ public class FileChooser extends CordovaPlugin {
     }
 
     public static String getFileExtension(Uri uri) {
-        String fileType = myContext.getContentResolver().getType(uri);
+        String fileType = getContentResolver().getType(uri);
         return MimeTypeMap.getSingleton().getExtensionFromMimeType(fileType);
     }
 
     public static String getFileNameFromCursor(Uri uri) {
-        Cursor fileCursor = myContext.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
+        Cursor fileCursor = getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
         String fileName = null;
         if (fileCursor != null && fileCursor.moveToFirst()) {
             int cIndex = fileCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -133,22 +133,4 @@ public class FileChooser extends CordovaPlugin {
         return fileName;
     }
 
-    public static void copyStream(File src, File dst) throws IOException {
-        InputStream in = new FileInputStream(src);
-        try {
-            OutputStream out = new FileOutputStream(dst);
-            try {
-                // Transfer bytes from in to out
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-            } finally {
-                out.close();
-            }
-        } finally {
-            in.close();
-        }
-    }
 }
