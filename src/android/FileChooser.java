@@ -101,4 +101,33 @@ public class FileChooser extends CordovaPlugin {
         }
         return Uri.fromFile(file);
     }
+
+    public static String getFileName(Uri uri) {
+        String fileName = getFileNameFromCursor(uri);
+        if (fileName == null) {
+            String fileExtension = getFileExtension(uri);
+            fileName = "temp_file" + (fileExtension != null ? "." + fileExtension : "");
+        } else if (!fileName.contains(".")) {
+            String fileExtension = getFileExtension(uri);
+            fileName = fileName + "." + fileExtension;
+        }
+        return fileName;
+    }
+
+    public static String getFileExtension(Uri uri) {
+        String fileType = myContext.getContentResolver().getType(uri);
+        return MimeTypeMap.getSingleton().getExtensionFromMimeType(fileType);
+    }
+
+    public static String getFileNameFromCursor(Uri uri) {
+        Cursor fileCursor = myContext.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
+        String fileName = null;
+        if (fileCursor != null && fileCursor.moveToFirst()) {
+            int cIndex = fileCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            if (cIndex != -1) {
+                fileName = fileCursor.getString(cIndex);
+            }
+        }
+        return fileName;
+    }
 }
